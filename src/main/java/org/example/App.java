@@ -41,7 +41,6 @@ public class App
     public static void main( String[] args ) throws Exception
     {
         App app = new App();
-        app.startClient();
         app.startServer();
         app.waitForServerExit();
     }
@@ -170,6 +169,9 @@ public class App
 
         server.setHandler(handlers);
         server.start();
+
+        LOG.info("Server is listening for HTTP/1.1 on URI: {}", HTTP1_URI);
+        LOG.info("Server is listening for HTTP/2 on URI: {}", HTTP2_URI);
     }
 
     private void waitForServerExit() throws InterruptedException
