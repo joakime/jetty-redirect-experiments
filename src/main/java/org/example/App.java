@@ -1,7 +1,9 @@
 package org.example;
 
+import java.io.ByteArrayOutputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -11,6 +13,7 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.eclipse.jetty.alpn.server.ALPNServerConnectionFactory;
 import org.eclipse.jetty.client.HttpClient;
+import org.eclipse.jetty.http.HttpMethod;
 import org.eclipse.jetty.http2.HTTP2Cipher;
 import org.eclipse.jetty.http2.client.HTTP2Client;
 import org.eclipse.jetty.http2.client.http.HttpClientTransportOverHTTP2;
@@ -29,6 +32,7 @@ import org.eclipse.jetty.server.handler.ContextHandler;
 import org.eclipse.jetty.server.handler.ContextHandlerCollection;
 import org.eclipse.jetty.server.handler.DefaultHandler;
 import org.eclipse.jetty.server.handler.HandlerList;
+import org.eclipse.jetty.util.IO;
 import org.eclipse.jetty.util.ssl.SslContextFactory;
 import org.eclipse.jetty.util.thread.QueuedThreadPool;
 import org.slf4j.Logger;
@@ -38,7 +42,7 @@ public class App
 {
     private static final Logger LOG = LoggerFactory.getLogger(App.class);
 
-    public static void main( String[] args ) throws Exception
+    public static void main(String[] args) throws Exception
     {
         App app = new App();
         app.startServer();
@@ -48,7 +52,8 @@ public class App
     private static final int HTTP1_PORT = 8080;
     private static final int HTTP2_PORT = 8443;
     public static final URI HTTP1_URI = URI.create(String.format("http://localhost:%d/", HTTP1_PORT));
-    public static final URI HTTP2_URI = URI.create(String.format("https://localhost:%d/", HTTP2_PORT));;
+    public static final URI HTTP2_URI = URI.create(String.format("https://localhost:%d/", HTTP2_PORT));
+    ;
 
     private Server server;
     private HttpClient client;
@@ -127,7 +132,8 @@ public class App
 
         ContextHandler postHandler = new ContextHandler();
         postHandler.setContextPath("/post");
-        postHandler.setHandler(new AbstractHandler() {
+        postHandler.setHandler(new AbstractHandler()
+        {
             @Override
             public void handle(String s, Request request, HttpServletRequest httpServletRequest, HttpServletResponse httpServletResponse) throws IOException
             {
@@ -146,14 +152,29 @@ public class App
 
         ContextHandler otherHandler = new ContextHandler();
         otherHandler.setContextPath("/other");
-        otherHandler.setHandler(new AbstractHandler() {
+        otherHandler.setHandler(new AbstractHandler()
+        {
             @Override
             public void handle(String s, Request request, HttpServletRequest httpServletRequest, HttpServletResponse httpServletResponse) throws IOException
             {
                 LOG.info("handle /other");
+
                 httpServletResponse.setCharacterEncoding("utf-8");
                 httpServletResponse.setContentType("text/plain");
-                httpServletResponse.getWriter().println("This is the other handler");
+
+                if (HttpMethod.POST.is(request.getMethod()))
+                {
+                    InputStream in = request.getInputStream();
+                    try (ByteArrayOutputStream out = new ByteArrayOutputStream())
+                    {
+                        IO.copy(in, out);
+                        httpServletResponse.getWriter().printf("Read %,d bytes from request", out.size());
+                    }
+                }
+                else
+                {
+                    httpServletResponse.getWriter().println("This is the other handler");
+                }
                 request.setHandled(true);
             }
         });

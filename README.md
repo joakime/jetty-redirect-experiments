@@ -1,6 +1,6 @@
 # Experiments with Jetty and Redirect on HTTP/2
 
-To compile & test.
+## To compile & test.
 
 Use OpenJDK 11 (or newer)
 
@@ -8,7 +8,7 @@ Use OpenJDK 11 (or newer)
 mvn clean install
 ```
 
-To run server (you should compile & test first)
+## To run server (you should compile & test first)
 
 ``` shell
 mvn exec:java
@@ -31,9 +31,10 @@ You should see something like ...
 
 Tip: use Ctrl+C to close/shutdown the server.
 
-To test with curl and HTTP/2.
+## To test with curl and HTTP/2.
 
-(This is the command line with curl version "7.81.0 (x86_64-pc-linux-gnu)")
+This is the command line with curl version "7.81.0 (x86_64-pc-linux-gnu)".
+This command line does not follow redirects.
 
 ```shell
 curl --insecure --http2 'https://localhost:8443/post/info' -X POST -H "Content-type: text/xml" --data-binary @pom.xml -vvv
@@ -83,3 +84,77 @@ Note: Unnecessary use of -X or --request, POST is already inferred.
 * old SSL session ID is stale, removing
 * Connection #0 to host localhost left intact
 ```
+
+## To test with curl and HTTP/2 and follow redirects
+
+This is the command line with curl version "7.81.0 (x86_64-pc-linux-gnu)".
+This command line does not follow redirects.
+
+```shell
+curl --insecure --location --http2 'https://localhost:8443/post/info' -X POST -H "Content-type: text/xml" --data-binary @pom.xml -vvv
+```
+
+You'll see the following ...
+
+``` plain
+*   Trying 127.0.0.1:8443...
+* Connected to localhost (127.0.0.1) port 8443 (#0)
+* ALPN, offering h2
+* ALPN, offering http/1.1
+* TLSv1.0 (OUT), TLS header, Certificate Status (22):
+..(snip)..
+* TLSv1.3 (OUT), TLS handshake, Finished (20):
+* SSL connection using TLSv1.3 / TLS_AES_256_GCM_SHA384
+* ALPN, server accepted to use h2
+* Server certificate:
+..(snip)..
+* TLSv1.2 (OUT), TLS header, Supplemental data (23):
+> POST /post/info HTTP/2
+> Host: localhost:8443
+> user-agent: curl/7.81.0
+> accept: */*
+> content-type: text/xml
+> content-length: 3324
+> 
+* TLSv1.2 (OUT), TLS header, Supplemental data (23):
+..(snip)..
+* TLSv1.2 (IN), TLS header, Supplemental data (23):
+< HTTP/2 307 
+< server: Jetty(10.0.12)
+< x-powered-by: Jetty(10.0.12)
+< date: Wed, 19 Oct 2022 19:36:07 GMT
+< location: https://localhost:8443/other/
+< content-length: 0
+< 
+* TLSv1.2 (IN), TLS header, Supplemental data (23):
+* TLSv1.3 (IN), TLS handshake, Newsession Ticket (4):
+* old SSL session ID is stale, removing
+* Connection #0 to host localhost left intact
+* Issue another request to this URL: 'https://localhost:8443/other/'
+* Found bundle for host localhost: 0x558adbe71ff0 [can multiplex]
+* Re-using existing connection! (#0) with host localhost
+* Connected to localhost (127.0.0.1) port 8443 (#0)
+* Using Stream ID: 3 (easy handle 0x558adbe7aba0)
+* TLSv1.2 (OUT), TLS header, Supplemental data (23):
+> POST /other/ HTTP/2
+> Host: localhost:8443
+> user-agent: curl/7.81.0
+> accept: */*
+> content-type: text/xml
+> content-length: 3324
+> 
+* TLSv1.2 (OUT), TLS header, Supplemental data (23):
+* We are completely uploaded and fine
+* TLSv1.2 (IN), TLS header, Supplemental data (23):
+< HTTP/2 200 
+< server: Jetty(10.0.12)
+< x-powered-by: Jetty(10.0.12)
+< date: Wed, 19 Oct 2022 19:36:07 GMT
+< content-type: text/plain;charset=utf-8
+< content-length: 29
+< 
+Read 3,324 bytes from request
+* Connection #0 to host localhost left intact
+```
+
+This shows that the POST is followed, and resubmitted by curl to the followed location.
