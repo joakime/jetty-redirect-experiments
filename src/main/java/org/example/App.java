@@ -53,7 +53,12 @@ public class App
     private static final int HTTP2_PORT = 8443;
     public static final URI HTTP1_URI = URI.create(String.format("http://localhost:%d/", HTTP1_PORT));
     public static final URI HTTP2_URI = URI.create(String.format("https://localhost:%d/", HTTP2_PORT));
-    ;
+
+    enum FollowRedirects
+    {
+        FOLLOW,
+        NO_FOLLOW
+    }
 
     private Server server;
     private HttpClient client;
@@ -68,7 +73,7 @@ public class App
         return this.client;
     }
 
-    public void startClient() throws Exception
+    public void startClient(FollowRedirects followRedirects) throws Exception
     {
         ClientConnector clientConnector = new ClientConnector();
         QueuedThreadPool clientThreads = new QueuedThreadPool();
@@ -79,7 +84,15 @@ public class App
         clientConnector.setSslContextFactory(sslClient);
         HTTP2Client http2Client = new HTTP2Client(clientConnector);
         client = new HttpClient(new HttpClientTransportOverHTTP2(http2Client));
-        client.setFollowRedirects(false);
+        switch (followRedirects)
+        {
+            case FOLLOW:
+                client.setFollowRedirects(true);
+                break;
+            case NO_FOLLOW:
+                client.setFollowRedirects(false);
+                break;
+        }
         client.start();
     }
 

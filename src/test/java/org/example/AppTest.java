@@ -1,8 +1,6 @@
 package org.example;
 
 import java.net.URI;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeoutException;
 
 import org.eclipse.jetty.client.api.ContentResponse;
 import org.eclipse.jetty.client.util.FormRequestContent;
@@ -10,7 +8,8 @@ import org.eclipse.jetty.util.Fields;
 import org.eclipse.jetty.util.component.LifeCycle;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -27,7 +26,6 @@ public class AppTest
     {
         app = new App();
         app.startServer();
-        app.startClient();
     }
 
     @AfterEach
@@ -37,9 +35,11 @@ public class AppTest
         LifeCycle.stop(app.getServer());
     }
 
-    @Test
-    public void testHttp11PostThatResultsIn307() throws ExecutionException, InterruptedException, TimeoutException
+    @ParameterizedTest
+    @EnumSource(App.FollowRedirects.class)
+    public void testHttp11PostThatResultsIn307(App.FollowRedirects followRedirects) throws Exception
     {
+        app.startClient(followRedirects);
         URI destUri = App.HTTP1_URI.resolve("/post/info");
         LOG.info("Client request to: {}", destUri);
         Fields postForm = new Fields();
@@ -49,12 +49,15 @@ public class AppTest
             .send();
         System.err.println("Response: " + response.getHeaders());
         System.err.println(response.getContentAsString());
-        assertThat(response.getStatus(), is(307));
+        int expectedStatus = followRedirects == App.FollowRedirects.NO_FOLLOW ? 307 : 200;
+        assertThat(response.getStatus(), is(expectedStatus));
     }
 
-    @Test
-    public void testHttp2PostThatResultsIn307() throws ExecutionException, InterruptedException, TimeoutException
+    @ParameterizedTest
+    @EnumSource(App.FollowRedirects.class)
+    public void testHttp2PostThatResultsIn307(App.FollowRedirects followRedirects) throws Exception
     {
+        app.startClient(followRedirects);
         URI destUri = App.HTTP2_URI.resolve("/post/info");
         LOG.info("Client request to: {}", destUri);
         Fields postForm = new Fields();
@@ -64,12 +67,15 @@ public class AppTest
             .send();
         System.err.println("Response: " + response.getHeaders());
         System.err.println(response.getContentAsString());
-        assertThat(response.getStatus(), is(307));
+        int expectedStatus = followRedirects == App.FollowRedirects.NO_FOLLOW ? 307 : 200;
+        assertThat(response.getStatus(), is(expectedStatus));
     }
 
-    @Test
-    public void testHttp11PostThatResultsIn307WithBody() throws ExecutionException, InterruptedException, TimeoutException
+    @ParameterizedTest
+    @EnumSource(App.FollowRedirects.class)
+    public void testHttp11PostThatResultsIn307WithBody(App.FollowRedirects followRedirects) throws Exception
     {
+        app.startClient(followRedirects);
         URI destUri = App.HTTP1_URI.resolve("/post/body");
         LOG.info("Client request to: {}", destUri);
         Fields postForm = new Fields();
@@ -79,12 +85,15 @@ public class AppTest
             .send();
         System.err.println("Response: " + response.getHeaders());
         System.err.println(response.getContentAsString());
-        assertThat(response.getStatus(), is(307));
+        int expectedStatus = followRedirects == App.FollowRedirects.NO_FOLLOW ? 307 : 200;
+        assertThat(response.getStatus(), is(expectedStatus));
     }
 
-    @Test
-    public void testHttp2PostThatResultsIn307WithBody() throws ExecutionException, InterruptedException, TimeoutException
+    @ParameterizedTest
+    @EnumSource(App.FollowRedirects.class)
+    public void testHttp2PostThatResultsIn307WithBody(App.FollowRedirects followRedirects) throws Exception
     {
+        app.startClient(followRedirects);
         URI destUri = App.HTTP2_URI.resolve("/post/body");
         LOG.info("Client request to: {}", destUri);
         Fields postForm = new Fields();
@@ -94,6 +103,7 @@ public class AppTest
             .send();
         System.err.println("Response: " + response.getHeaders());
         System.err.println(response.getContentAsString());
-        assertThat(response.getStatus(), is(307));
+        int expectedStatus = followRedirects == App.FollowRedirects.NO_FOLLOW ? 307 : 200;
+        assertThat(response.getStatus(), is(expectedStatus));
     }
 }
