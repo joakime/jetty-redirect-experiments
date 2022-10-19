@@ -33,8 +33,8 @@ Tip: use Ctrl+C to close/shutdown the server.
 
 ## To test with curl and HTTP/2.
 
-This is the command line with curl version "7.81.0 (x86_64-pc-linux-gnu)".
-This command line does not follow redirects.
+This is the command line with curl version "7.81.0 (x86_64-pc-linux-gnu)".  
+This command line does _not follow_ redirects. (default behavior in curl)
 
 ```shell
 curl --insecure --http2 'https://localhost:8443/post/info' -X POST -H "Content-type: text/xml" --data-binary @pom.xml -vvv
@@ -87,8 +87,8 @@ Note: Unnecessary use of -X or --request, POST is already inferred.
 
 ## To test with curl and HTTP/2 and follow redirects
 
-This is the command line with curl version "7.81.0 (x86_64-pc-linux-gnu)".
-This command line does not follow redirects.
+This is the command line with curl version "7.81.0 (x86_64-pc-linux-gnu)".  
+This command line will follow redirects.  (the `--location` line tells curl to follow redirects)
 
 ```shell
 curl --insecure --location --http2 'https://localhost:8443/post/info' -X POST -H "Content-type: text/xml" --data-binary @pom.xml -vvv
